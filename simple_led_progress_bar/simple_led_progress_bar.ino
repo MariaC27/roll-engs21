@@ -8,7 +8,8 @@
 #endif
 
 // Which pin on the Arduino is connected to the NeoPixels?
-#define PIN        0 // On Trinket or Gemma, suggest changing this to 1
+#define PIN        0 
+#define PIN2       1
 
 // How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS 12 // Popular NeoPixel ring size
@@ -20,6 +21,7 @@ int pinBuzzer = 3;// the onboard buzzer on the XIAO expansion board is A3
 // strips you might need to change the third parameter -- see the
 // strandtest example for more information on possible values.
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel pixels2(NUMPIXELS, PIN2, NEO_GRB + NEO_KHZ800);
 
 #define DELAYVAL 5000 // Time (in milliseconds) to pause between pixels - 5 seconds for 12 pixels = 1 minute for roller circle
 
@@ -33,10 +35,12 @@ void setup() {
   // END of Trinket-specific code.
 
   pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+  pixels2.begin();
 }
 
 void loop() {
   pixels.clear(); // Set all pixel colors to 'off'
+  pixels2.clear();
 
   // The first NeoPixel in a strand is #0, second is 1, all the way up
   // to the count of pixels minus one.
@@ -45,8 +49,10 @@ void loop() {
     // pixels.Color() takes RGB values, from 0,0,0 up to 255,255,255
     // Here we're using a moderately bright green color:
     pixels.setPixelColor(i, pixels.Color(0, 255, 0));
+    pixels2.setPixelColor(i, pixels.Color(0, 255, 0));
 
     pixels.show();   // Send the updated pixel colors to the hardware.
+    pixels2.show(); 
 
     tone(pinBuzzer, 200);
     delay(100); // plays a 1-second tone when pixels show
@@ -59,8 +65,10 @@ void loop() {
     // pixels.Color() takes RGB values, from 0,0,0 up to 255,255,255
     // Here we're using a moderately bright green color:
     pixels.setPixelColor(i, pixels.Color(255, 0, 0));
+    pixels2.setPixelColor(i, pixels.Color(255, 0, 0));
 
     pixels.show();   // Send the updated pixel colors to the hardware.
+    pixels2.show();
   }
   delay(15000);
 
