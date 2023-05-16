@@ -18,7 +18,6 @@ int pinBuzzer = 3;// the onboard buzzer on the XIAO expansion board is A3
 LSM6DS3 myIMU(I2C_MODE, 0x6A); 
 
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
-Adafruit_NeoPixel pixels2(NUMPIXELS, PIN2, NEO_GRB + NEO_KHZ800);
 
 #define DELAYVAL 5000 // 5 seconds for 12 pixels = 1 minute for roller circle
 
@@ -42,22 +41,6 @@ void setup() {
 void loop() {
 
 //Accelerometer
-    Serial.print("\nAccelerometer:\n");
-    Serial.print(" X1 = ");
-    Serial.println(myIMU.readFloatAccelX(), 4);
-    Serial.print(" Y1 = ");
-    Serial.println(myIMU.readFloatAccelY(), 4);
-    Serial.print(" Z1 = ");
-    Serial.println(myIMU.readFloatAccelZ(), 4);
- 
-    //Gyroscope
-    Serial.print("\nGyroscope:\n");
-    Serial.print(" X1 = ");
-    Serial.println(myIMU.readFloatGyroX(), 4);
-    Serial.print(" Y1 = ");
-    Serial.println(myIMU.readFloatGyroY(), 4);
-    Serial.print(" Z1 = ");
-    Serial.println(myIMU.readFloatGyroZ(), 4);
 
   pixels.clear(); // Set all pixel colors to 'off'
 
@@ -76,6 +59,15 @@ void loop() {
     tone(pinBuzzer, 200);
     delay(100); // plays a 1-second tone when pixels show
     noTone(pinBuzzer);
+
+    // to do: store these values and check if consecutively zero - if so, stop the lights
+    Serial.print("\nAccelerometer:\n");
+    Serial.print(" X1 = ");
+    Serial.println(myIMU.readFloatAccelX(), 4);
+    Serial.print(" Y1 = ");
+    Serial.println(myIMU.readFloatAccelY(), 4);
+    Serial.print(" Z1 = ");
+    Serial.println(myIMU.readFloatAccelZ(), 4);
     
     delay(DELAYVAL); // Pause before next pass through loop
   }
