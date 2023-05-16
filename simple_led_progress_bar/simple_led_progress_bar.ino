@@ -26,6 +26,7 @@ Adafruit_NeoPixel pixels2(NUMPIXELS, PIN2, NEO_GRB + NEO_KHZ800);
 #define DELAYVAL 5000 // Time (in milliseconds) to pause between pixels - 5 seconds for 12 pixels = 1 minute for roller circle
 
 void setup() {
+  pinMode(6, OUTPUT);
   pinMode(pinBuzzer, OUTPUT);// initialize the buzzer pin as an output
   // These lines are specifically to support the Adafruit Trinket 5V 16 MHz.
   // Any other board, you can remove this part (but no harm leaving it):
@@ -41,6 +42,11 @@ void setup() {
 void loop() {
   pixels.clear(); // Set all pixel colors to 'off'
   pixels2.clear();
+
+  digitalWrite(6, HIGH);
+  delay(1000);
+  digitalWrite(6, LOW);
+  delay(1000);
 
   // The first NeoPixel in a strand is #0, second is 1, all the way up
   // to the count of pixels minus one.
