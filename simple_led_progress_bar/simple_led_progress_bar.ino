@@ -3,78 +3,87 @@
 // Adafruit NeoPixel library
 
 #include <Adafruit_NeoPixel.h>
+#include "LSM6DS3.h"
+#include "Wire.h"
 #ifdef __AVR__
- #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
+ #include <avr/power.h> 
 #endif
 
-// Which pin on the Arduino is connected to the NeoPixels?
 #define PIN        0 
-#define PIN2       1
 
-// How many NeoPixels are attached to the Arduino?
-#define NUMPIXELS 12 // Popular NeoPixel ring size
+#define NUMPIXELS 12 
 
 int pinBuzzer = 3;// the onboard buzzer on the XIAO expansion board is A3
 
-// When setting up the NeoPixel library, we tell it how many pixels,
-// and which pin to use to send signals. Note that for older NeoPixel
-// strips you might need to change the third parameter -- see the
-// strandtest example for more information on possible values.
+LSM6DS3 myIMU(I2C_MODE, 0x6A); 
+
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel pixels2(NUMPIXELS, PIN2, NEO_GRB + NEO_KHZ800);
 
-#define DELAYVAL 5000 // Time (in milliseconds) to pause between pixels - 5 seconds for 12 pixels = 1 minute for roller circle
+#define DELAYVAL 5000 // 5 seconds for 12 pixels = 1 minute for roller circle
 
 void setup() {
-  pinMode(6, OUTPUT);
-  pinMode(pinBuzzer, OUTPUT);// initialize the buzzer pin as an output
-  // These lines are specifically to support the Adafruit Trinket 5V 16 MHz.
-  // Any other board, you can remove this part (but no harm leaving it):
+  pinMode(6, OUTPUT); //external buzzer
+  pinMode(pinBuzzer, OUTPUT);// onboard buzzer
 #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
   clock_prescale_set(clock_div_1);
 #endif
-  // END of Trinket-specific code.
+  pixels.begin();
 
-  pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-  pixels2.begin();
+  Serial.begin(9600);
+  while (!Serial);
+  if (myIMU.begin() != 0) {
+      Serial.println("Device error");
+  } else {
+      Serial.println("Device OK!");
+  }
 }
 
 void loop() {
-  pixels.clear(); // Set all pixel colors to 'off'
-  pixels2.clear();
 
+//Accelerometer
+    Serial.print("\nAccelerometer:\n");
+    Serial.print(" X1 = ");
+    Serial.println(myIMU.readFloatAccelX(), 4);
+    Serial.print(" Y1 = ");
+    Serial.println(myIMU.readFloatAccelY(), 4);
+    Serial.print(" Z1 = ");
+    Serial.println(myIMU.readFloatAccelZ(), 4);
+ 
+    //Gyroscope
+    Serial.print("\nGyroscope:\n");
+    Serial.print(" X1 = ");
+    Serial.println(myIMU.readFloatGyroX(), 4);
+    Serial.print(" Y1 = ");
+    Serial.println(myIMU.readFloatGyroY(), 4);
+    Serial.print(" Z1 = ");
+    Serial.println(myIMU.readFloatGyroZ(), 4);
+
+  pixels.clear(); // Set all pixel colors to 'off'
+
+  // for external buzzer
   digitalWrite(6, HIGH);
   delay(1000);
   digitalWrite(6, LOW);
   delay(1000);
 
-  // The first NeoPixel in a strand is #0, second is 1, all the way up
-  // to the count of pixels minus one.
   for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
 
-    // pixels.Color() takes RGB values, from 0,0,0 up to 255,255,255
-    // Here we're using a moderately bright green color:
     pixels.setPixelColor(i, pixels.Color(0, 255, 0));
-    pixels2.setPixelColor(i, pixels.Color(0, 255, 0));
-
-    pixels.show();   // Send the updated pixel colors to the hardware.
-    pixels2.show(); 
-
+    pixels.show(); 
+ 
+    // onboard buzzer
     tone(pinBuzzer, 200);
     delay(100); // plays a 1-second tone when pixels show
     noTone(pinBuzzer);
     
     delay(DELAYVAL); // Pause before next pass through loop
   }
+
   for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
 
-    // pixels.Color() takes RGB values, from 0,0,0 up to 255,255,255
-    // Here we're using a moderately bright green color:
     pixels.setPixelColor(i, pixels.Color(255, 0, 0));
-    pixels2.setPixelColor(i, pixels.Color(255, 0, 0));
-
     pixels.show();   // Send the updated pixel colors to the hardware.
-    pixels2.show();
   }
   delay(15000);
 
