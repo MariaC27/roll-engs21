@@ -13,7 +13,10 @@
 
 #define NUMPIXELS 12 
 
-int pinBuzzer = 3;// the onboard buzzer on the XIAO expansion board is A3
+int pinBuzzer = 3;
+int extBuzzer = 7;
+// the onboard buzzer on the XIAO expansion board is A3 (set to 3)
+// external grover buzzer plugged into A7 (set to 7)
 
 LSM6DS3 myIMU(I2C_MODE, 0x6A); 
 
@@ -22,7 +25,7 @@ Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 #define DELAYVAL 5000 // 5 seconds for 12 pixels = 1 minute for roller circle
 
 void setup() {
-  pinMode(6, OUTPUT); //external buzzer
+  pinMode(extBuzzer, OUTPUT); //external buzzer
   pinMode(pinBuzzer, OUTPUT);// onboard buzzer
 #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
   clock_prescale_set(clock_div_1);
@@ -45,9 +48,9 @@ void loop() {
   pixels.clear(); // Set all pixel colors to 'off'
 
   // for external buzzer
-  digitalWrite(6, HIGH);
+  digitalWrite(extBuzzer, HIGH);
   delay(1000);
-  digitalWrite(6, LOW);
+  digitalWrite(extBuzzer, LOW);
   delay(1000);
 
   for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
@@ -68,6 +71,14 @@ void loop() {
     Serial.println(myIMU.readFloatAccelY(), 4);
     Serial.print(" Z1 = ");
     Serial.println(myIMU.readFloatAccelZ(), 4);
+
+    Serial.print("\nGyro:\n");
+    Serial.print(" X1 = ");
+    Serial.println(myIMU.readFloatGyroX(), 4);
+    Serial.print(" Y1 = ");
+    Serial.println(myIMU.readFloatGyroY(), 4);
+    Serial.print(" Z1 = ");
+    Serial.println(myIMU.readFloatGyroZ(), 4);
     
     delay(DELAYVAL); // Pause before next pass through loop
   }
