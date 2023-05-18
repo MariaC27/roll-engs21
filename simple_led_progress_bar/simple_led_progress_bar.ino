@@ -9,7 +9,7 @@
  #include <avr/power.h> 
 #endif
 
-#define PIN        0 
+#define PIN        5 // for LEDs
 
 #define NUMPIXELS 12 
 
@@ -25,12 +25,12 @@ Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 #define DELAYVAL 5000 // 5 seconds for 12 pixels = 1 minute for roller circle
 
 void setup() {
+  pixels.begin();
   pinMode(extBuzzer, OUTPUT); //external buzzer
   pinMode(pinBuzzer, OUTPUT);// onboard buzzer
 #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
   clock_prescale_set(clock_div_1);
 #endif
-  pixels.begin();
 
   Serial.begin(9600);
   while (!Serial);
@@ -43,8 +43,6 @@ void setup() {
 
 void loop() {
 
-//Accelerometer
-
   pixels.clear(); // Set all pixel colors to 'off'
 
   // for external buzzer
@@ -54,16 +52,12 @@ void loop() {
   delay(1000);
 
   for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
+    Serial.println("reached for loop");
 
     pixels.setPixelColor(i, pixels.Color(0, 255, 0));
     pixels.show(); 
- 
-    // onboard buzzer
-    tone(pinBuzzer, 200);
-    delay(100); // plays a 1-second tone when pixels show
-    noTone(pinBuzzer);
 
-    // to do: store these values and check if consecutively zero - if so, stop the lights
+    //Accelerometer
     Serial.print("\nAccelerometer:\n");
     Serial.print(" X1 = ");
     Serial.println(myIMU.readFloatAccelX(), 4);
@@ -79,6 +73,14 @@ void loop() {
     Serial.println(myIMU.readFloatGyroY(), 4);
     Serial.print(" Z1 = ");
     Serial.println(myIMU.readFloatGyroZ(), 4);
+
+    // not rolling: gyro x and y are within abs 5 of zero
+    // rolling: gyro x and y not within abs 5 of 0
+ 
+    // onboard buzzer
+    tone(pinBuzzer, 200);
+    delay(100); // plays a 1-second tone when pixels show
+    noTone(pinBuzzer);
     
     delay(DELAYVAL); // Pause before next pass through loop
   }
