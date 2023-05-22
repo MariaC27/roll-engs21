@@ -20,6 +20,7 @@ int extBuzzer = 7;
 // external grover buzzer plugged into A7 (set to 7)
 
 int buttonState = 0;  
+int startState = 0;
 
 LSM6DS3 myIMU(I2C_MODE, 0x6A); 
 
@@ -29,7 +30,7 @@ Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 void setup() {
   pixels.begin();
-  pinMode(extBuzzer, OUTPUT); //external buzzer
+  // pinMode(extBuzzer, OUTPUT); //external buzzer
   pinMode(pinBuzzer, OUTPUT);// onboard buzzer
 #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
   clock_prescale_set(clock_div_1);
@@ -49,7 +50,7 @@ void setup() {
 }
 
 
-bool greenSequence(int buttonState){
+void greenSequence(){
   // buzzer goes off when green sequence starts
   digitalWrite(extBuzzer, HIGH);
   delay(1000);
@@ -57,33 +58,33 @@ bool greenSequence(int buttonState){
   delay(1000);
   // loop which turns on green pixels in sequence
   int i=0;
-  while (buttonState == 0 && i<NUMPIXELS){ // while button is not pressed and pixels left
+  while (/*buttonState == 0 &&  */ i<NUMPIXELS){ // while button is not pressed and pixels left
     Serial.println(i);
 
     pixels.setPixelColor(i, pixels.Color(0, 255, 0));
     pixels.show(); 
     i = i + 1;
     // check button state each time
-    buttonState = digitalRead(buttonPin);
-    Serial.print("green sequence button state: ");
-    Serial.println(buttonState); // if button state becomes 1, exists while and for loops
+    // buttonState = digitalRead(buttonPin);
+    // Serial.print("green sequence button state: ");
+    // Serial.println(buttonState); // if button state becomes 1, exists while and for loops
     delay(DELAYVAL); // Pause before next pass through loop
   }
 
   pixels.clear(); // after exiting while loop
 
   // logic to find out of string finished or not:
-  if (i == NUMPIXELS - 1) {
-    return true; // reached the end
-  } else{
-    return false;
-  }
+  // if (i == NUMPIXELS - 1) {
+  //   return true; // reached the end
+  // } else{
+  //   return false;
+  // }
   
 }
 
-void redSequence(int buttonState){
-  Serial.print("red sequence button state: ");
-  Serial.println(buttonState);
+void redSequence(){
+  // Serial.print("red sequence button state: ");
+  // Serial.println(buttonState);
   // buzzer goes off when red sequence starts
   digitalWrite(extBuzzer, HIGH);
   delay(1000);
@@ -95,8 +96,8 @@ void redSequence(int buttonState){
     pixels.setPixelColor(i, pixels.Color(255, 0, 0));
     pixels.show();   // Send the updated pixel colors to the hardware.
     i = i + 1;
-    buttonState = digitalRead(buttonPin); // check button state
-    Serial.println(buttonState); 
+    // buttonState = digitalRead(buttonPin); // check button state
+    // Serial.println(buttonState); 
   }
     
   delay(15000); // stays red for 15 seconds
@@ -109,7 +110,8 @@ void loop() {
 
 
   buttonState = digitalRead(buttonPin); // read state of on/off button to start
-
+  Serial.print("Button state: ");
+  Serial.println(buttonState);
   //Accelerometer and Gyro
   // Serial.print("\nAccelerometer:\n");
   // Serial.print(" X1 = ");
@@ -118,22 +120,23 @@ void loop() {
   // Serial.println(myIMU.readFloatAccelY(), 4);
   // Serial.print(" Z1 = ");
   // Serial.println(myIMU.readFloatAccelZ(), 4);
-  Serial.print("\nGyro:\n");
-  Serial.print(" X1 = ");
-  Serial.println(myIMU.readFloatGyroX(), 4);
-  Serial.print(" Y1 = ");
-  Serial.println(myIMU.readFloatGyroY(), 4);
-  Serial.print(" Z1 = ");
-  Serial.println(myIMU.readFloatGyroZ(), 4);
+  // Serial.print("\nGyro:\n");
+  // Serial.print(" X1 = ");
+  // Serial.println(myIMU.readFloatGyroX(), 4);
+  // Serial.print(" Y1 = ");
+  // Serial.println(myIMU.readFloatGyroY(), 4);
+  // Serial.print(" Z1 = ");
+  // Serial.println(myIMU.readFloatGyroZ(), 4);
   // not rolling: gyro x and y are within abs 5 of zero
   // rolling: gyro x and y not within abs 5 of 0
 
   
-  bool res = greenSequence(buttonState);
-  Serial.print("res: ");
-  Serial.println(res);
-  if (res == 0){ // only move on to the red sequence if the green completed successfully
-    redSequence(buttonState);
+  if (buttonState == 1){
+    greenSequence();
+    redSequence();
   }
+
+  
+  
  
 }
