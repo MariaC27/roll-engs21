@@ -13,10 +13,13 @@
 
 #define NUMPIXELS 12 
 
-int pinBuzzer = 3;
+int buttonPin = 0; 
+int pinBuzzer = 3; //onboard buzzer
 int extBuzzer = 7;
 // the onboard buzzer on the XIAO expansion board is A3 (set to 3)
 // external grover buzzer plugged into A7 (set to 7)
+
+int buttonState = 0;  
 
 LSM6DS3 myIMU(I2C_MODE, 0x6A); 
 
@@ -39,57 +42,79 @@ void setup() {
   } else {
       Serial.println("Device OK!");
   }
+
+  pinMode(buttonPin, INPUT); // initialize button as input
+
 }
 
-void loop() {
 
-  pixels.clear(); // Set all pixel colors to 'off'
-
-  // for external buzzer
+void greenSequence(int buttonState){
+  // buzzer goes off when green sequence starts
   digitalWrite(extBuzzer, HIGH);
   delay(1000);
   digitalWrite(extBuzzer, LOW);
   delay(1000);
-
+  // loop which turns on green pixels in sequence
   for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
-    Serial.println("reached for loop");
+    while (buttonState == 0){ // while button is not pressed
+      Serial.println("reached for loop");
 
-    pixels.setPixelColor(i, pixels.Color(0, 255, 0));
-    pixels.show(); 
-
-    //Accelerometer
-    Serial.print("\nAccelerometer:\n");
-    Serial.print(" X1 = ");
-    Serial.println(myIMU.readFloatAccelX(), 4);
-    Serial.print(" Y1 = ");
-    Serial.println(myIMU.readFloatAccelY(), 4);
-    Serial.print(" Z1 = ");
-    Serial.println(myIMU.readFloatAccelZ(), 4);
-
-    Serial.print("\nGyro:\n");
-    Serial.print(" X1 = ");
-    Serial.println(myIMU.readFloatGyroX(), 4);
-    Serial.print(" Y1 = ");
-    Serial.println(myIMU.readFloatGyroY(), 4);
-    Serial.print(" Z1 = ");
-    Serial.println(myIMU.readFloatGyroZ(), 4);
-
-    // not rolling: gyro x and y are within abs 5 of zero
-    // rolling: gyro x and y not within abs 5 of 0
- 
-    // onboard buzzer
-    tone(pinBuzzer, 200);
-    delay(100); // plays a 1-second tone when pixels show
-    noTone(pinBuzzer);
-    
-    delay(DELAYVAL); // Pause before next pass through loop
+      pixels.setPixelColor(i, pixels.Color(0, 255, 0));
+      pixels.show(); 
+      // check button state each time
+      buttonState = digitalRead(buttonPin);
+      Serial.println(buttonState);
+      delay(DELAYVAL); // Pause before next pass through loop
+    }
   }
+  
+}
 
-  for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
+void redSequence(int button){
+  Serial.println(button);
+  // buzzer goes off when red sequence starts
+  digitalWrite(extBuzzer, HIGH);
+  delay(1000);
+  digitalWrite(extBuzzer, LOW);
+  delay(1000);
+    // loop that turns on all red pixels at once
+    for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
 
     pixels.setPixelColor(i, pixels.Color(255, 0, 0));
     pixels.show();   // Send the updated pixel colors to the hardware.
   }
-  delay(15000);
+  delay(15000); // stays red for 15 seconds
+  pixels.clear(); // Set all pixel colors to 'off'
+}
 
+
+
+void loop() {
+
+
+  buttonState = digitalRead(buttonPin); // read state of on/off button
+
+  //Accelerometer and Gyro
+  Serial.print("\nAccelerometer:\n");
+  Serial.print(" X1 = ");
+  Serial.println(myIMU.readFloatAccelX(), 4);
+  Serial.print(" Y1 = ");
+  Serial.println(myIMU.readFloatAccelY(), 4);
+  Serial.print(" Z1 = ");
+  Serial.println(myIMU.readFloatAccelZ(), 4);
+
+  Serial.print("\nGyro:\n");
+  Serial.print(" X1 = ");
+  Serial.println(myIMU.readFloatGyroX(), 4);
+  Serial.print(" Y1 = ");
+  Serial.println(myIMU.readFloatGyroY(), 4);
+  Serial.print(" Z1 = ");
+  Serial.println(myIMU.readFloatGyroZ(), 4);
+  // not rolling: gyro x and y are within abs 5 of zero
+  // rolling: gyro x and y not within abs 5 of 0
+
+  
+  greenSequence(buttonState);
+  redSequence(buttonState);
+ 
 }
