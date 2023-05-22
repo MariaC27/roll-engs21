@@ -43,46 +43,62 @@ void setup() {
       Serial.println("Device OK!");
   }
 
-  pinMode(buttonPin, INPUT); // initialize button as input
+  pinMode(buttonPin, INPUT); // initialize button as input - changed to INPUT_PULLUP for new button
+
 
 }
 
 
-void greenSequence(int buttonState){
+bool greenSequence(int buttonState){
   // buzzer goes off when green sequence starts
   digitalWrite(extBuzzer, HIGH);
   delay(1000);
   digitalWrite(extBuzzer, LOW);
   delay(1000);
   // loop which turns on green pixels in sequence
-  for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
-    while (buttonState == 0){ // while button is not pressed
-      Serial.println("reached for loop");
+  int i=0;
+  while (buttonState == 0 && i<NUMPIXELS){ // while button is not pressed and pixels left
+    Serial.println(i);
 
-      pixels.setPixelColor(i, pixels.Color(0, 255, 0));
-      pixels.show(); 
-      // check button state each time
-      buttonState = digitalRead(buttonPin);
-      Serial.println(buttonState);
-      delay(DELAYVAL); // Pause before next pass through loop
-    }
+    pixels.setPixelColor(i, pixels.Color(0, 255, 0));
+    pixels.show(); 
+    i = i + 1;
+    // check button state each time
+    buttonState = digitalRead(buttonPin);
+    Serial.print("green sequence button state: ");
+    Serial.println(buttonState); // if button state becomes 1, exists while and for loops
+    delay(DELAYVAL); // Pause before next pass through loop
+  }
+
+  pixels.clear(); // after exiting while loop
+
+  // logic to find out of string finished or not:
+  if (i == NUMPIXELS - 1) {
+    return true; // reached the end
+  } else{
+    return false;
   }
   
 }
 
-void redSequence(int button){
-  Serial.println(button);
+void redSequence(int buttonState){
+  Serial.print("red sequence button state: ");
+  Serial.println(buttonState);
   // buzzer goes off when red sequence starts
   digitalWrite(extBuzzer, HIGH);
   delay(1000);
   digitalWrite(extBuzzer, LOW);
   delay(1000);
-    // loop that turns on all red pixels at once
-    for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
-
+  // loop that turns on all red pixels at once
+  int i=0;
+  while (buttonState == 0 && i<NUMPIXELS){ 
     pixels.setPixelColor(i, pixels.Color(255, 0, 0));
     pixels.show();   // Send the updated pixel colors to the hardware.
+    i = i + 1;
+    buttonState = digitalRead(buttonPin); // check button state
+    Serial.println(buttonState); 
   }
+    
   delay(15000); // stays red for 15 seconds
   pixels.clear(); // Set all pixel colors to 'off'
 }
@@ -92,17 +108,16 @@ void redSequence(int button){
 void loop() {
 
 
-  buttonState = digitalRead(buttonPin); // read state of on/off button
+  buttonState = digitalRead(buttonPin); // read state of on/off button to start
 
   //Accelerometer and Gyro
-  Serial.print("\nAccelerometer:\n");
-  Serial.print(" X1 = ");
-  Serial.println(myIMU.readFloatAccelX(), 4);
-  Serial.print(" Y1 = ");
-  Serial.println(myIMU.readFloatAccelY(), 4);
-  Serial.print(" Z1 = ");
-  Serial.println(myIMU.readFloatAccelZ(), 4);
-
+  // Serial.print("\nAccelerometer:\n");
+  // Serial.print(" X1 = ");
+  // Serial.println(myIMU.readFloatAccelX(), 4);
+  // Serial.print(" Y1 = ");
+  // Serial.println(myIMU.readFloatAccelY(), 4);
+  // Serial.print(" Z1 = ");
+  // Serial.println(myIMU.readFloatAccelZ(), 4);
   Serial.print("\nGyro:\n");
   Serial.print(" X1 = ");
   Serial.println(myIMU.readFloatGyroX(), 4);
@@ -114,7 +129,11 @@ void loop() {
   // rolling: gyro x and y not within abs 5 of 0
 
   
-  greenSequence(buttonState);
-  redSequence(buttonState);
+  bool res = greenSequence(buttonState);
+  Serial.print("res: ");
+  Serial.println(res);
+  if (res == 0){ // only move on to the red sequence if the green completed successfully
+    redSequence(buttonState);
+  }
  
 }
