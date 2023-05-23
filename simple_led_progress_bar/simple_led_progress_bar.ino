@@ -13,14 +13,13 @@
 
 #define NUMPIXELS 12 
 
-int buttonPin = 0; 
+int buttonPin = 0; //"on-off" button
 int pinBuzzer = 3; //onboard buzzer
 int extBuzzer = 7;
 // the onboard buzzer on the XIAO expansion board is A3 (set to 3)
 // external grover buzzer plugged into A7 (set to 7)
 
-int buttonState = 0;  
-int startState = 0;
+volatile bool buttonOn = false; //0 is "on" and 1 is "off"
 
 LSM6DS3 myIMU(I2C_MODE, 0x6A); 
 
@@ -28,8 +27,22 @@ Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 #define DELAYVAL 5000 // 5 seconds for 12 pixels = 1 minute for roller circle
 
+// interuptHandler allows code to intervene at anypart of the void loop when button is pressed
+void interuptHandler() { 
+  buttonOn = !buttonOn;
+}
+
+void clearPixels(int currIndex){
+  Serial.println("clearing pixels");
+  for (int i = 0; i < currIndex; i++){
+    pixels.setPixelColor(i, pixels.Color(0, 0, 0));
+    pixels.show(); 
+  }
+}
+
 void setup() {
   pixels.begin();
+  pinMode(buttonPin, INPUT_PULLUP);
   // pinMode(extBuzzer, OUTPUT); //external buzzer
   pinMode(pinBuzzer, OUTPUT);// onboard buzzer
 #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
@@ -44,60 +57,55 @@ void setup() {
       Serial.println("Device OK!");
   }
 
-  pinMode(buttonPin, INPUT); // initialize button as input - changed to INPUT_PULLUP for new button
+  attachInterrupt(digitalPinToInterrupt(buttonPin), interuptHandler, RISING);
 
 
 }
 
 
 void greenSequence(){
+  pixels.clear();
   // buzzer goes off when green sequence starts
   digitalWrite(extBuzzer, HIGH);
   delay(1000);
   digitalWrite(extBuzzer, LOW);
   delay(1000);
   // loop which turns on green pixels in sequence
-  int i=0;
-  while (/*buttonState == 0 &&  */ i<NUMPIXELS){ // while button is not pressed and pixels left
-    Serial.println(i);
-
-    pixels.setPixelColor(i, pixels.Color(0, 255, 0));
-    pixels.show(); 
-    i = i + 1;
-    // check button state each time
-    // buttonState = digitalRead(buttonPin);
-    // Serial.print("green sequence button state: ");
-    // Serial.println(buttonState); // if button state becomes 1, exists while and for loops
-    delay(DELAYVAL); // Pause before next pass through loop
+  for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
+      // Check if button is on or off 
+      if (buttonOn){ 
+        // if on, light next pixel
+        Serial.println("green if");
+        pixels.setPixelColor(i, pixels.Color(0, 255, 0));
+        pixels.show();   // Send the updated pixel colors to the hardware.
+        delay(DELAYVAL); // Pause before next pass through loop
+      } else {
+        // if off, end for loop and go to the next one
+        clearPixels(i);
+        break;
+      }
   }
 
-  pixels.clear(); // after exiting while loop
-
-  // logic to find out of string finished or not:
-  // if (i == NUMPIXELS - 1) {
-  //   return true; // reached the end
-  // } else{
-  //   return false;
-  // }
-  
 }
 
 void redSequence(){
-  // Serial.print("red sequence button state: ");
-  // Serial.println(buttonState);
   // buzzer goes off when red sequence starts
   digitalWrite(extBuzzer, HIGH);
   delay(1000);
   digitalWrite(extBuzzer, LOW);
   delay(1000);
   // loop that turns on all red pixels at once
-  int i=0;
-  while (buttonState == 0 && i<NUMPIXELS){ 
-    pixels.setPixelColor(i, pixels.Color(255, 0, 0));
-    pixels.show();   // Send the updated pixel colors to the hardware.
-    i = i + 1;
-    // buttonState = digitalRead(buttonPin); // check button state
-    // Serial.println(buttonState); 
+  for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
+        // check if button is on or off 
+        if(buttonOn) {
+          // if on, lights everything red
+          pixels.setPixelColor(i, pixels.Color(255, 0, 0));
+
+          pixels.show();   // Send the updated pixel colors to the hardware.
+        } else {
+          // if off, exit for loop
+          break;
+        }       
   }
     
   delay(15000); // stays red for 15 seconds
@@ -108,10 +116,6 @@ void redSequence(){
 
 void loop() {
 
-
-  buttonState = digitalRead(buttonPin); // read state of on/off button to start
-  Serial.print("Button state: ");
-  Serial.println(buttonState);
   //Accelerometer and Gyro
   // Serial.print("\nAccelerometer:\n");
   // Serial.print(" X1 = ");
@@ -130,13 +134,13 @@ void loop() {
   // not rolling: gyro x and y are within abs 5 of zero
   // rolling: gyro x and y not within abs 5 of 0
 
-  
-  if (buttonState == 1){
-    greenSequence();
-    redSequence();
-  }
+    if (buttonOn){
+      greenSequence();
+    }
+    if (buttonOn){
+      redSequence();
+    }
 
+    pixels.clear();
   
-  
- 
 }
