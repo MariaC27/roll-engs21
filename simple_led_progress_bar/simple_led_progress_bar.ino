@@ -113,6 +113,29 @@ void redSequence(){
 }
 
 
+// checks if gyro meets certain boundaries
+bool isRolling(float x, float y){
+  // not rolling: gyro x and y are within abs 5 of zero
+  // rolling: gyro x and y not within abs 5 of 0
+  x = abs(x);
+  y = abs(y); // get absolute values
+
+  // Serial.print("x and y: ");
+  // Serial.print(x);
+  // Serial.print(" ");
+  // Serial.println(y);
+
+  if(x > 5 && y > 5){
+    // rolling
+    return true;
+  } else{
+    // not rolling
+    return false;
+  }
+
+}
+
+
 
 void loop() {
 
@@ -131,8 +154,11 @@ void loop() {
   // Serial.println(myIMU.readFloatGyroY(), 4);
   // Serial.print(" Z1 = ");
   // Serial.println(myIMU.readFloatGyroZ(), 4);
-  // not rolling: gyro x and y are within abs 5 of zero
-  // rolling: gyro x and y not within abs 5 of 0
+  float gyroX = myIMU.readFloatGyroX();
+  float gyroY = myIMU.readFloatGyroY();
+
+  bool roll = isRolling(gyroX, gyroY);
+  // roll is 1 (true) or 0 (false)
 
     if (buttonOn){
       greenSequence();
