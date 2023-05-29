@@ -141,12 +141,6 @@ void loop() {
   // Serial.println(myIMU.readFloatGyroY(), 4);
   // Serial.print(" Z1 = ");
   // Serial.println(myIMU.readFloatGyroZ(), 4);
-  float gyroX = myIMU.readFloatGyroX();
-  float gyroY = myIMU.readFloatGyroY();
-
-  rolling = isRolling(gyroX, gyroY);
-  // roll is 1 (true) or 0 (false)
-  Serial.println(rolling);
 
   // If button is on
   if (buttonOn && rolling){
@@ -168,6 +162,11 @@ void loop() {
 
     // Light up LEDs (red to green)
     for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
+      float gyroX = myIMU.readFloatGyroX();
+      float gyroY = myIMU.readFloatGyroY();
+      rolling = isRolling(gyroX, gyroY);
+      // roll is 1 (true) or 0 (false)
+      Serial.println(rolling);
       // Check if button is on or off 
       if (buttonOn && rolling){ 
         // if on, light next pixel (gradually gets more green)
@@ -186,12 +185,17 @@ void loop() {
   }
 
   // if on, enter for loop - Green
-  if(buttonOn) {
+  if(buttonOn && rolling) {
 
     // Light up all LEDs Green for completion
     for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
         // check if button is on or off 
-      if(buttonOn) {
+        float gyroX = myIMU.readFloatGyroX();
+        float gyroY = myIMU.readFloatGyroY();
+        rolling = isRolling(gyroX, gyroY);
+        // roll is 1 (true) or 0 (false)
+        Serial.println(rolling);
+      if(buttonOn && rolling) {
         pixelsWake.clear();// turn off wake LED
         pixelsWake.show();
           // if on, lights everything red
@@ -207,6 +211,7 @@ void loop() {
     }
 
     // Play ending theme
+  
     int size1 = sizeof(noteDurations1) / sizeof(int); 
     for (int thisNote = 0; thisNote < size1; thisNote++) {
     // to calculate the note duration, take one second divided by the note type
@@ -221,6 +226,8 @@ void loop() {
       // stop the tone playing:
       noTone(BUZZER_PIN);
     }
+    
+
   }
   
   // Wake function, draws current from battery every 15 seconds to keep awake
