@@ -32,6 +32,8 @@ LSM6DS3 myIMU(I2C_MODE, 0x6A);
 
 volatile bool buttonOn = false; // Button state is off first, 0 is "on" and 1 is "off" so a press is a "falling action"
 volatile bool rolling = true; // starts as true, as user starts rolling
+volatile float prevX = 6; // start above 5
+volatile float prevY = 6;
 
 int melody0[] = { // Starting music theme (star trek)
   NOTE_D4, NOTE_G4, NOTE_C5, 
@@ -88,12 +90,15 @@ void setup() {
 #endif
 
  Serial.begin(9600);
-  while (!Serial);
-  if (myIMU.begin() != 0) {
-      Serial.println("Device error");
-  } else {
-      Serial.println("Device OK!");
-  }
+ myIMU.begin();
+
+ // remove this for serial to work connected to battery pack
+  // while (!Serial);
+  // if (myIMU.begin() != 0) {
+  //     Serial.println("Device error");
+  // } else {
+  //     Serial.println("Device OK!");
+  // }
 
 
   pixels.begin(); // Set up neopixel strips 
@@ -113,11 +118,22 @@ bool isRolling(float x, float y){
   // Serial.print(" ");
   // Serial.println(y);
 
-  if(x > 5 && y > 5){
+  // Serial.print(prevX);
+  // Serial.print(" ");
+  // Serial.println(prevY);
+
+  if((x > 5 && y > 5) && (prevX > 5 && prevY > 5)){
     // rolling
+    prevX = x;
+    prevY = y;
+    Serial.print(prevX);
+    Serial.print(" ");
+    Serial.println(prevY);
     return true;
   } else{
     // not rolling
+    prevX = x;
+    prevY = y;
     return false;
   }
 
@@ -126,22 +142,24 @@ bool isRolling(float x, float y){
 // Main Loop
 void loop() {
 
-  //Accelerometer and Gyro
-  // Serial.print("\nAccelerometer:\n");
-  // Serial.print(" X1 = ");
-  // Serial.println(myIMU.readFloatAccelX(), 4);
-  // Serial.print(" Y1 = ");
-  // Serial.println(myIMU.readFloatAccelY(), 4);
-  // Serial.print(" Z1 = ");
-  // Serial.println(myIMU.readFloatAccelZ(), 4);
-  // Serial.print("\nGyro:\n");
-  // Serial.print(" X1 = ");
-  // Serial.println(myIMU.readFloatGyroX(), 4);
-  // Serial.print(" Y1 = ");
-  // Serial.println(myIMU.readFloatGyroY(), 4);
-  // Serial.print(" Z1 = ");
-  // Serial.println(myIMU.readFloatGyroZ(), 4);
+  // Wake function, draws current from battery every 15 seconds to keep awake
+  for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
+        pixelsWake.setPixelColor(i, pixels.Color(0, 0, 255));
+        pixelsWake.show();   // Send the updated pixel colors to the hardware. 
+  }  
 
+  float gyroX = myIMU.readFloatGyroX();
+  float gyroY = myIMU.readFloatGyroY();
+  rolling = isRolling(gyroX, gyroY);
+  Serial.print("check outside: ");
+  Serial.println(rolling);
+
+  if (rolling){
+    Serial.print("rollingL ");
+    Serial.println(rolling);
+    Serial.print("button on: ");
+    Serial.println(buttonOn);
+  }
   // If button is on
   if (buttonOn && rolling){
     // Play opening melody
@@ -166,6 +184,7 @@ void loop() {
       float gyroY = myIMU.readFloatGyroY();
       rolling = isRolling(gyroX, gyroY);
       // roll is 1 (true) or 0 (false)
+      Serial.print("check inside 1: ");
       Serial.println(rolling);
       // Check if button is on or off 
       if (buttonOn && rolling){ 
@@ -194,6 +213,7 @@ void loop() {
         float gyroY = myIMU.readFloatGyroY();
         rolling = isRolling(gyroX, gyroY);
         // roll is 1 (true) or 0 (false)
+        Serial.print("check inside 2: ");
         Serial.println(rolling);
       if(buttonOn && rolling) {
         pixelsWake.clear();// turn off wake LED
@@ -229,12 +249,7 @@ void loop() {
     
 
   }
-  
-  // Wake function, draws current from battery every 15 seconds to keep awake
-  for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
-        pixelsWake.setPixelColor(i, pixels.Color(0, 0, 255));
-        pixelsWake.show();   // Send the updated pixel colors to the hardware. 
-  }    
+    
   // wait 5 seconds before restarting cycle 
   pixels.clear();
   pixels.show();
